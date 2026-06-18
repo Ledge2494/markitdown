@@ -27,7 +27,7 @@ Edit it to include the following JSON entry:
   "command": "uvx",
   "args": [
     "--from",
-    "git+https://github.com/Ledge2494/markitdown@6c455b7#subdirectory=packages/markitdown-mcp",
+    "git+https://github.com/Ledge2494/markitdown@2fa46cc#subdirectory=packages/markitdown-mcp",
     "markitdown-mcp",
     "-w",
     "<RELATIVE-PATH-WORKING-DIR>"
