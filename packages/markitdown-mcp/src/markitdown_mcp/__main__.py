@@ -11,7 +11,11 @@ from starlette.types import Receive, Scope, Send
 from mcp.server import Server
 from mcp.server.streamable_http_manager import StreamableHTTPSessionManager
 from markitdown import MarkItDown
+from pathlib import Path
 import uvicorn
+
+# Global working directory, set via CLI
+_working_dir: Path | None = None
 
 # Initialize FastMCP server for MarkItDown (SSE)
 mcp = FastMCP("markitdown")
@@ -19,8 +23,27 @@ mcp = FastMCP("markitdown")
 
 @mcp.tool()
 async def convert_to_markdown(uri: str) -> str:
-    """Convert a resource described by an http:, https:, file: or data: URI to markdown"""
-    return MarkItDown(enable_plugins=check_plugins_enabled()).convert_uri(uri).markdown
+    """Convert a resource described by an http:, https:, file: (absolute or relative) or data: URI to markdown"""
+    resolved_uri = _resolve_uri(uri)
+    return MarkItDown(enable_plugins=check_plugins_enabled()).convert_uri(resolved_uri).markdown
+
+
+def _resolve_uri(uri: str) -> str:
+    """If the uri looks like a local file path (not a URI with a scheme),
+    resolve it relative to the configured working directory and return a file:// URI."""
+    uri = uri.strip()
+    # If it already has a scheme, pass it through as-is
+    if "://" in uri or uri.startswith("data:"):
+        return uri
+
+    # Treat it as a local file path — resolve against working directory
+    p = Path(uri)
+    if not p.is_absolute():
+        if _working_dir is not None:
+            p = _working_dir / p
+        else:
+            p = Path.cwd() / p
+    return p.resolve().as_uri()
 
 
 def check_plugins_enabled() -> bool:
@@ -102,7 +125,21 @@ def main():
     parser.add_argument(
         "--port", type=int, default=None, help="Port to listen on (default: 3001)"
     )
+    parser.add_argument(
+        "--working-dir",
+        "-w",
+        default=None,
+        type=str,
+        help="Working directory for resolving relative file paths (default: current working directory)",
+    )
     args = parser.parse_args()
+
+    # Set global working directory
+    global _working_dir
+    if args.working_dir is not None:
+        _working_dir = Path(args.working_dir).resolve()
+        # Also change the process CWD so that MarkItDown itself resolves correctly
+        os.chdir(str(_working_dir))
 
     use_http = args.http or args.sse
 
