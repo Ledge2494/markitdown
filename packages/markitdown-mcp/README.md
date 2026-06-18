@@ -3,7 +3,6 @@
 > [!IMPORTANT]
 > The MarkItDown-MCP package is meant for **local use**, with local trusted agents. In particular, when running the MCP server with Streamable HTTP or SSE, it binds to `localhost` by default, and is not exposed to other machines on the network or Internet. In this configuration, it is meant to be a direct alternative to the STDIO transport, which may be more convenient in some cases. DO NOT bind the server to other interfaces unless you understand the [security implications](#security-considerations) of doing so.
 
-
 [![PyPI](https://img.shields.io/pypi/v/markitdown-mcp.svg)](https://pypi.org/project/markitdown-mcp/)
 ![PyPI - Downloads](https://img.shields.io/pypi/dd/markitdown-mcp)
 [![Built by AutoGen Team](https://img.shields.io/badge/Built%20by-AutoGen%20Team-blue)](https://github.com/microsoft/autogen)
@@ -12,51 +11,11 @@ The `markitdown-mcp` package provides a lightweight STDIO, Streamable HTTP, and 
 
 It exposes one tool: `convert_to_markdown(uri)`, where uri can be any `http:`, `https:`, `file:`, or `data:` URI.
 
-## Installation
+## Fork specifics
 
-To install the package, use pip:
-
-```bash
-pip install markitdown-mcp
-```
-
-## Usage
-
-To run the MCP server, using STDIO (default), use the following command:
-
-
-```bash	
-markitdown-mcp
-```
-
-To run the MCP server, using Streamable HTTP and SSE, use the following command:
-
-```bash	
-markitdown-mcp --http --host 127.0.0.1 --port 3001
-```
-
-## Running in Docker
-
-To run `markitdown-mcp` in Docker, build the Docker image using the provided Dockerfile:
-```bash
-docker build -t markitdown-mcp:latest .
-```
-
-And run it using:
-```bash
-docker run -it --rm markitdown-mcp:latest
-```
-This will be sufficient for remote URIs. To access local files, you need to mount the local directory into the container. For example, if you want to access files in `/home/user/data`, you can run:
-
-```bash
-docker run -it --rm -v /home/user/data:/workdir markitdown-mcp:latest
-```
-
-Once mounted, all files under data will be accessible under `/workdir` in the container. For example, if you have a file `example.txt` in `/home/user/data`, it will be accessible in the container at `/workdir/example.txt`.
+This fork adds a new cli parameter to this mcp `--workspace` (`-w`) that roots all relative URIs to this value.
 
 ## Accessing from Claude Desktop
-
-It is recommended to use the Docker image when running the MCP server for Claude Desktop.
 
 Follow [these instructions](https://modelcontextprotocol.io/quickstart/user#for-claude-desktop-users) to access Claude's `claude_desktop_config.json` file.
 
@@ -64,37 +23,15 @@ Edit it to include the following JSON entry:
 
 ```json
 {
-  "mcpServers": {
-    "markitdown": {
-      "command": "docker",
-      "args": [
-        "run",
-        "--rm",
-        "-i",
-        "markitdown-mcp:latest"
-      ]
-    }
-  }
-}
-```
-
-If you want to mount a directory, adjust it accordingly:
-
-```json
-{
-  "mcpServers": {
-    "markitdown": {
-      "command": "docker",
-      "args": [
-	"run",
-	"--rm",
-	"-i",
-	"-v",
-	"/home/user/data:/workdir",
-	"markitdown-mcp:latest"
-      ]
-    }
-  }
+  "transport": "stdio",
+  "command": "uvx",
+  "args": [
+    "--from",
+    "git+https://github.com/Ledge2494/markitdown@6c455b7#subdirectory=packages/markitdown-mcp",
+    "markitdown-mcp",
+    "-w",
+    "<RELATIVE-PATH-WORKING-DIR>"
+  ]
 }
 ```
 
@@ -109,25 +46,29 @@ npx @modelcontextprotocol/inspector
 You can then connect to the inspector through the specified host and port (e.g., `http://localhost:5173/`).
 
 If using STDIO:
-* select `STDIO` as the transport type,
-* input `markitdown-mcp` as the command, and
-* click `Connect`
+
+- select `STDIO` as the transport type,
+- input `markitdown-mcp` as the command, and
+- click `Connect`
 
 If using Streamable HTTP:
-* select `Streamable HTTP` as the transport type,
-* input `http://127.0.0.1:3001/mcp` as the URL, and
-* click `Connect`
+
+- select `Streamable HTTP` as the transport type,
+- input `http://127.0.0.1:3001/mcp` as the URL, and
+- click `Connect`
 
 If using SSE:
-* select `SSE` as the transport type,
-* input `http://127.0.0.1:3001/sse` as the URL, and
-* click `Connect`
+
+- select `SSE` as the transport type,
+- input `http://127.0.0.1:3001/sse` as the URL, and
+- click `Connect`
 
 Finally:
-* click the `Tools` tab,
-* click `List Tools`,
-* click `convert_to_markdown`, and
-* run the tool on any valid URI.
+
+- click the `Tools` tab,
+- click `List Tools`,
+- click `convert_to_markdown`, and
+- run the tool on any valid URI.
 
 ## Security Considerations
 
