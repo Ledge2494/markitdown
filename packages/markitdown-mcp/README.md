@@ -35,6 +35,17 @@ Edit it to include the following JSON entry:
 }
 ```
 
+## Troubleshooting
+
+> The model keeps using `file://` or starts URI with `/`
+> Add the following to your system prompt
+>
+> ```Markdown
+> To use the MarkItDown MCP, you will need to give it relative path i.e you must not use **any** protocol nor add a start slash to the path
+> ```
+>
+> _(If you find a proper fix to add in the tool description, please open an issue or pull request)_
+
 ## Debugging
 
 To debug the MCP server you can use the `MCP Inspector` tool.
